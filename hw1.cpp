@@ -1,9 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <cmath>
-#include <chrono>
 #include <random>
-#include <algorithm>
 
 int main() {
     const double memory_reads = 1000000000;  // Times to read memory at a single take
@@ -20,14 +17,14 @@ int main() {
     std::random_device rand_dev;
     std::mt19937 generator(rand_dev());
     std::uniform_int_distribution<int> distr_filler(0, 1000000);
-
-    int i, j, size_number, mult;  // i, j, k are indices, size_number is the size of a specific memory step in KiB.
-    unsigned int k, jump, indexed_size_int;  // indexed size in int size
-    double time_per_read, elapsed_seconds, iterated_time;  // time_per_read is self explanatory,
-    // elapsed_seconds is the total time of the repeated takes, iterated_time is the time of a single take.
     std::chrono::steady_clock::time_point start, end;  // start and end are the time points at which we start and end one take.
+
+    int i, j, k, size_number, mult, jump, indexed_size_int;  // i, j, k are indices, size_number is the size of a specific memory step in KiB.
+    double time_per_read, elapsed_seconds, iterated_time;  // time_per_read is self explanatory,
+                                                           // elapsed_seconds is the total time of the repeated takes, iterated_time is the time of a single take.
+    
     int *allocated_memory = new int[n_of_ints];  // initializes array of size 'size'
-    std::fill_n(allocated_memory, n_of_ints, distr_filler(generator));
+    std::fill_n(allocated_memory, n_of_ints, distr_filler(generator));  // fills array with random integers
 
     // Creates arrays with memory sizes from 'n_from' to 'n_to'.
     int sizes[(n_to + 1)];
@@ -50,19 +47,18 @@ int main() {
         elapsed_seconds = 0;
         indexed_size_int = sizes[i] / sizeof(int);
         for (j = 0; j < times_repeated; j++) {
-            std::uniform_int_distribution<unsigned int> distr_jump(jump_from, jump_to);
+            std::uniform_int_distribution<int> distr_jump(jump_from, jump_to);
             std::uniform_int_distribution<int> distr_mult(mult_from, mult_to);
             jump = distr_jump(generator);
             mult = distr_mult(generator);
 
             start = std::chrono::steady_clock::now();  // Start counting time
             for (k = 0; k < memory_reads; k++) {  // Repeat memory read 'memory_reads' times.
-                allocated_memory[(k * jump) & indexed_size_int] = allocated_memory[(k * jump) & indexed_size_int] *
-                                                                  mult;  // Iterates and multiplies the jump-th element by a random 'mult' int through
-                // the first part of size 'indexed_size_int' of the array. It iterates through
-                // a the bitwise and operator that acts like a mod but doesn't take that much time.
-                // In this way, it's going over and over through the first elements for each size,
-                // only accessing a 'indexed_size_int' part of that array.
+                allocated_memory[(k * jump) & indexed_size_int] *= mult;  // Iterates and multiplies the jump-th element by a random 'mult' int through
+                                                                          // the first part of size 'indexed_size_int' of the array. It iterates through
+                                                                          // a the bitwise and operator that acts like a mod but doesn't take that much time.
+                                                                          // In this way, it's going over and over through the first elements for each size,
+                                                                          // only accessing a 'indexed_size_int' part of that array.
             }
             end = std::chrono::steady_clock::now();  // Stop counting time
 
